@@ -2,9 +2,14 @@
 
 WSLでC++の勉強をする
 
+## 環境
+
+- Ubuntu 18.04 LTS(Windows Subsystem for Linux 1)
+- VSCode Remote Development
+
 ## WSLの準備
 
-### Gitの設定
+### Gitの準備
 
 #### Gitのインストール
 
@@ -54,7 +59,6 @@ GitHubのページの[Settingページ](https://github.com/settings/profile)->�
 cat ~/.ssh/id_rsa_github
 ```
 
-
 入力が完了したら「Add SSH Key」ボタンをクリックして登録する．
 
 最後に，SSHのコンフィグファイルを設定する．
@@ -81,3 +85,97 @@ ssh -T github
 ```
 
 最初に接続するときは`known_host`にGitHubが無いので，GitHubを`known_host`に追加するかどうかを聞かれる．`yes`と入力して追加する．
+
+## C++環境の構築
+
+WSL上にC++の開発環境を構築する．  
+VSCodeのRemote Development拡張を使用し，VSCode上で開発を行えるようにする．
+
+### C++コンパイラのインストール
+
+まずWSLにC++のコンパイラやデバッガをインストールする．
+
+```console
+sudo apt update
+sudo apt install build-essential gdb
+```
+
+### 各種設定ファイルの準備
+
+VSCodeのC++拡張機能を使ってビルドとデバッグを行うには，`.vscode/`ディレクトリ内に`tasks.json`と`launch.json`ファイルを置く必要がある．
+これらのファイルは初回にビルド/デバッグを行ったときに自動生成されるので手作業で作る必要はない．
+
+適当な`.cpp`ファイルを作り，Ctrl+Shift+Bキーでビルドを実行する．
+
+ビルドの種類の選択を促されるので，「g++ build active file」を選択する．
+空のビルドを実行すると，`.vscode/`ディレクトリ及び`tasks.json`ファイルが自動で生成される．
+
+また，F5キーを押すとデバッグを実行することができる．設定ファイルが無い状態でデバッグを実行するとデバッガの種類の選択を促されるので，「g++ build and debug active file」を選択する．すると`.launch.json`ファイルが生成される．
+
+自動生成された設定ファイルの中身は特に修正する必要は無いが，`tasks.json`に関しては`"group"`タグを修正するとCtrl+Shift+Bを押したときにコンパイラの種類を選択する必要が無くなるので便利．
+
+また，Gitで管理する都合上，実行ファイルに拡張子を付けて`.gitignore`で弾けるようにしたい．
+自動生成されたファイルの設定では，実行ファイルに拡張子が付かないようになっている．
+コンパイルによって生成された実行ファイルに`.out`という拡張子が付くように設定を変更する．
+
+最終的に`taksk.json`と`launch.json`は以下のような内容になる．
+
+```json
+# tasks.json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "shell",
+      "label": "C/C++: g++ build active file",
+      "command": "/usr/bin/g++",
+      "args": [
+        "-g",
+        "${file}",
+        "-o",
+        "${fileDirname}/${fileBasenameNoExtension}.out"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}
+```
+
+```json
+# launch.json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "g++ build and debug active file",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${fileDirname}/${fileBasenameNoExtension}.out",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "C/C++: g++ build active file",
+      "miDebuggerPath": "/usr/bin/gdb"
+    }
+  ]
+}
+```
