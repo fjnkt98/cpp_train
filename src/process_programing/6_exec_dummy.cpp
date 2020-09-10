@@ -1,11 +1,9 @@
 #include <iostream>
-#include <cerrno>
-#include <cstring>
-#include <cstdlib>
-#include <cstdio>
+#include <cstdlib>  // std::exit()
+#include <cstdio>   // std::perror()
 
-#include <unistd.h>
-#include <sys/wait.h>
+#include <unistd.h>   // fork(), execlp(), etc.
+#include <sys/wait.h> // waitpid(), etc.
 
 int main() {
   pid_t pid = 0;
@@ -13,10 +11,7 @@ int main() {
   pid = fork();
 
   if (pid < 0) {
-    const int err = errno;
-    std::cout << "failed to fork process." 
-              << std::strerror(err)
-              << std::endl;
+    std::perror("fork failed");
     std::exit(-1);
   } else if (pid == 0) {
     //execlp("/home/wisteria/cpp_train/src/process_programing/dummy.out",
